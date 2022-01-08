@@ -37,7 +37,7 @@ local GatherMate2MarkerOptions = {
                 enabled = {
                     type = 'toggle',
                     name = 'Add-On Enabled',
-                    desc = 'Enable or disable marking of recently visited GM2 tracking nodes.' .. addonNameFull,
+                    desc = 'Enable or disable marking of recently visited GM2 tracking nodes via ' .. addonNameFull,
                     get = 'GetEnabled',
                     set = 'SetEnabled',
                     order = 2
@@ -46,17 +46,17 @@ local GatherMate2MarkerOptions = {
 					type = 'color',
 					name = 'Marked Node Color',
 					hasAlpha = true,
-					desc = 'Color and Alpha for marked nodes. To simply dim existing minimap icons, just set to white and adjust alpha value.',
+					desc = 'Color and Alpha for marked nodes. To simply dim existing minimap icon and GM2 circles, just set to white and adjust alpha value.',
                     get = 'GetMarkedNodeColor',
                     set = 'SetMarkedNodeColor',
 					order = 3
 				},
-				markResetTimeInSeconds = {
+				markResetTimeInMinutes = {
 					type = 'input',
-					name = 'Mark Reset Time (in seconds)',
-					desc = 'Time (in seconds) to reset marked node icons. Default is 300 seconds (5 minutes).',
-                    get = 'GetResetTimeInSeconds',
-                    set = 'SetResetTimeInSeconds',
+					name = 'Mark Reset Time (in minutes)',
+					desc = 'Time (in minutes) to reset marked node icons. Default is 5. Supports partial minutes (0.5, etc.)',
+                    get = 'GetResetTimeInMinutes',
+                    set = 'SetResetTimeInMinutes',
 					order = 4
 				}						
             }
@@ -91,26 +91,41 @@ local GatherMate2MarkerOptions = {
 					type = 'description',
 					name = '\r\n' .. 'To get the most out of ' .. addonNameFull .. ', set GatherMate2\'s \'Tracking Distance\' (located under ' 
 						.. Text_special1 .. 'GatherMate 2->Minimap->Tracking Distance|r to somewhere around ' .. Text_special2 .. 
-						'80 -110|r.\r\n\r\nThe general idea is that when you pass near a resource node, GatherMate displays a tracking circle (dependent on how far you are from the historical data node.)\r\n\r\nIf a resource exists at that point, it will light up -- via WoW\'s built-in tracker. ' .. 
+						'80 -110|r.\r\n\r\nThe general idea is that when you pass near a resource node, GatherMate displays a tracking circle (dependent on how far you are from the historical data node.)\r\n\r\nIf a resource exists at that point, it will light up (via WoW\'s built-in tracker). ' .. 
 						'\r\n\r\n' .. addonNameFull .. ' will change the resource node icon\'s color on your MiniMap to let you know you\'ve already scanned the node.\r\n\r\nIcons will reset to their normal color once ' .. 
 						addonNameFull .. '\'s timer has ended.',
 					width = 'full',
 					fontSize = 'medium'
 				},
-				generalFaqHeader = {
+				miscFaqHeader = {
 					order = 5,
+					type = 'description',
+					name = HeaderColor_h1 .. '\r\nWhy set a custom color?',
+					width = 'full',
+					fontSize = 'large'
+				},
+				miscDistanceFaqDetails = {
+					order = 6,
+					type = 'description',
+					name = '\r\n' .. 'GatherMate automatically fades resource nodes that are far away. They are shown on the edges of the MiniMap. Choosing an explicit color/alpha can help to disambiguate visited/marked resource nodes from GM2\'s fade rules.',
+					width = 'full',
+					fontSize = 'medium'
+				},
+				generalFaqHeader = {
+					order = 7,
 					type = 'description',
 					name = HeaderColor_h1 .. '\r\nFuture Improvements',
 					width = 'full',
 					fontSize = 'large'
 				},
 				generalDistanceFaqDetails = {
-					order = 6,
+					order = 8,
 					type = 'description',
-					name = '\r\n' .. '- Integrated Routes support. If nothing, automate the node colors to match the current route color.\r\n- Optional SFX/VFX when a node has been marked \'seen\'. Might be obnoxious.',
+					name = '\r\n' .. '- Integrated Routes support: Set marked node colors to the choosen Routes route color.\r\n\r\n- Optional SFX or UI notification when a node has been marked \'seen\'. This might be useless, since Blizz doesn\'t notify when actual collectable resoures are available.',
 					width = 'full',
 					fontSize = 'medium'
 				}
+
 			}
         }
     }
@@ -119,8 +134,8 @@ local GatherMate2MarkerOptions = {
 local optionDefaults = {
     profile = {
         enabled = true,
-		resetTimeInSeconds = 300,
-		nodeColor = { 1.0, 1.0, 1.0, 0.35 }
+		ResetTimeInMinutes = 5,
+		nodeColor = { 1.0, 1.0, 1.0, 0.45 }
     }
 }
 
@@ -192,12 +207,12 @@ function GatherMate2Marker:SetMarkedNodeColor(info, r, g, b, a)
     self:RefreshConfig()    
 end
 
-function GatherMate2Marker:GetResetTimeInSeconds(info)
-    return tostring(profile.resetTimeInSeconds)
+function GatherMate2Marker:GetResetTimeInMinutes(info)
+    return tostring(profile.ResetTimeInMinutes)
 end
 
-function GatherMate2Marker:SetResetTimeInSeconds(info, val)
-	profile.resetTimeInSeconds = val
+function GatherMate2Marker:SetResetTimeInMinutes(info, val)
+	profile.ResetTimeInMinutes = val
     self:RefreshConfig()    
 end
 
@@ -237,7 +252,7 @@ end
 
 function GatherMate2Marker:ResetConfig()
 	profile.nodeColor = optionDefaults.profile.nodeColor
-	profile.resetTimeInSeconds = optionDefaults.profile.resetTimeInSeconds
+	profile.ResetTimeInMinutes = optionDefaults.profile.ResetTimeInMinutes
 	profile.enabled = optionDefaults.profile.enabled
 end
 
@@ -270,7 +285,7 @@ function GatherMate2Marker:AddMiniPin_STUB(pin, refresh)
 
 		GM_Display.UpdateMiniMap(true)
 
-		C_Timer.After(profile.resetTimeInSeconds, function() GatherMate2Marker:ResetNodeToDefault(pin) end);
+		C_Timer.After(profile.ResetTimeInMinutes * 60, function() GatherMate2Marker:ResetNodeToDefault(pin) end);
 	end
 end
 
