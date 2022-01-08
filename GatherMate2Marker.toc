@@ -1,0 +1,13 @@
+## Interface: 11302
+## Title: GatherMate2Marker
+## X-FullName: GatherMate 2 Marker
+## Author: Froboz
+## Notes: Marks recently checked resource nodes
+## Version: 1.0
+## Dependencies: GatherMate2
+## SavedVariables: GatherMate2MarkerDB
+
+embeds.xml
+
+# Main
+GatherMate2Marker.lua
