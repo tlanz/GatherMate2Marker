@@ -3,7 +3,7 @@
 ## X-FullName: GatherMate 2 Marker
 ## Author: Froboz
 ## Notes: Mark mini-map nodes as seen. Requires GatherMate2.
-## Version: 1.0.1
+## Version: 1.0.2
 ## Dependencies: GatherMate2
 ## SavedVariables: GatherMate2MarkerDB
 
