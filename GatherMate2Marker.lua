@@ -285,8 +285,8 @@ function GatherMate2Marker:AddMiniPin_STUB(pin, refresh)
 	end
 
 	-- GM2 still marks the circles, but no point in marking them as seen, since like.. we're dead!
-	local isDeadOrGhost = UnitIsDeadOrGhost('player')
-	if isDeadOrGhost == true then
+	local isDeadOrGhost = UnitIsDeadOrGhost('player') 
+	if isDeadOrGhost == true or IsFlying() then
 		return
 	end
 
