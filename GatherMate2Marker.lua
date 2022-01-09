@@ -29,7 +29,7 @@ local GatherMate2MarkerOptions = {
             type = 'group',
             order = 1,
             args = {
-                help = {
+                helpGeneral = {
                     type = 'description',
                     name = 'General Options',
                     order = 1
@@ -40,8 +40,14 @@ local GatherMate2MarkerOptions = {
                     desc = 'Enable or disable marking of recently visited GM2 tracking nodes via ' .. addonNameFull,
                     get = 'GetEnabled',
                     set = 'SetEnabled',
+					width = 'full',
                     order = 2
                 },
+                helpNode = {
+                    type = 'description',
+                    name = '\r\nNode Options',
+                    order = 3
+                },				
 				markedNodeColor = {
 					type = 'color',
 					name = 'Marked Node Color',
@@ -49,16 +55,30 @@ local GatherMate2MarkerOptions = {
 					desc = 'Color and Alpha for marked nodes. To simply dim existing minimap icon and GM2 circles, just set to white and adjust alpha value.',
                     get = 'GetMarkedNodeColor',
                     set = 'SetMarkedNodeColor',
-					order = 3
+					width = 'full',
+					order = 4
 				},
 				markResetTimeInMinutes = {
 					type = 'input',
-					name = 'Mark Reset Time (in minutes)',
+					name = 'Mark Reset Minutes (*requires reload)',
 					desc = 'Time (in minutes) to reset marked node icons. Default is 5. Supports partial minutes (0.5, etc.)',
                     get = 'GetResetTimeInMinutes',
                     set = 'SetResetTimeInMinutes',
-					order = 4
-				}						
+					width = 'full',
+					order = 5
+				},
+                helpMisc = {
+                    type = 'description',
+                    name = '\r\nMisc Options',
+                    order = 6
+                },				
+				reloadUIButton = {
+					type = 'execute',
+					name = 'Reload UI',
+					desc = 'Reload the Blizz UI',
+					func = function () ReloadUI() end,
+					order = 7,
+				}
             }
         },
         help = {
@@ -257,8 +277,6 @@ function GatherMate2Marker:ResetConfig()
 end
 
 function GatherMate2Marker:AddMiniPin_STUB(pin, refresh)	
-	PinDB[pin.coords] = pin
-	
 	-- trigger the original GM2 addMinimapPin method
 	GM_Display_addMiniMapPinActual(_, pin, refresh)	
 
@@ -272,32 +290,30 @@ function GatherMate2Marker:AddMiniPin_STUB(pin, refresh)
 		return
 	end
 
-	if pin.touched == true then
+	if PinDB[pin.coords] ~= nil and PinDB[pin.coords].touched == true then
 		pin.texture:SetVertexColor(UnpackColorData(profile.nodeColor))
 		return
 	end
 
 	-- if pin.isCircle == true and refresh == true then		
 	if pin.isCircle == true then		
-			pin.touched = true
+		if PinDB[pin.coords] == nil then
+			PinDB[pin.coords] = {}
+		end
+
+		PinDB[pin.coords].touched = true
 
 		pin.texture:SetVertexColor(UnpackColorData(profile.nodeColor))
 
 		GM_Display.UpdateMiniMap(true)
 
-		C_Timer.After(profile.ResetTimeInMinutes * 60, function() GatherMate2Marker:ResetNodeToDefault(pin) end);
+		C_Timer.After(profile.ResetTimeInMinutes * 60, function() GatherMate2Marker:ResetNodeToDefault(pin.coords) end);
 	end
 end
 
-function GatherMate2Marker:ResetNodeToDefault(pin)
-	if pin == nil then
-		return
-	end
-
-	pin.touched = false
-
-	if PinDB ~= nil and pin ~= nil and pin.coords ~= nil then
-		PinDB[pin.coords] = pin
+function GatherMate2Marker:ResetNodeToDefault(coords)
+	if PinDB ~= nil and coords ~= nil and PinDB[coords] ~= nil then
+		PinDB[coords].touched = false
 	end
 end
 
