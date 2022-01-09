@@ -2,8 +2,8 @@
 ## Title: GatherMate2Marker
 ## X-FullName: GatherMate 2 Marker
 ## Author: Froboz
-## Notes: Marks recently checked resource nodes
-## Version: 1.0
+## Notes: Mark mini-map nodes as seen. Requires GatherMate2.
+## Version: 1.0.1
 ## Dependencies: GatherMate2
 ## SavedVariables: GatherMate2MarkerDB
 
