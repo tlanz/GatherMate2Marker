@@ -1,7 +1,8 @@
 local addonName = GetAddOnMetadata('GatherMate2Marker', 'Title')
 local addonNameFull = GetAddOnMetadata('GatherMate2Marker', 'X-FullName')
+local addonVersion = GetAddOnMetadata('GatherMate2Marker', 'Version')
 
-local GatherMate2Marker = LibStub('AceAddon-3.0'):NewAddon('GatherMate2Marker', 'AceConsole-3.0')
+local GatherMate2Marker = LibStub('AceAddon-3.0'):NewAddon('GatherMate2Marker', 'AceConsole-3.0', 'AceTimer-3.0')
 local GatherMate = LibStub('AceAddon-3.0'):GetAddon('GatherMate2')
 local GatherMate2MarkerCfg = LibStub('AceConfig-3.0')
 
@@ -22,7 +23,7 @@ local GatherMate2MarkerOptions = {
     name = addonNameFull .. ' Options',
     handler = GatherMate2Marker,
     type = 'group',
-    childGroups = 'tab',
+    childGroups = 'select',
     args = {
         general = {
             name = 'General',
@@ -60,7 +61,7 @@ local GatherMate2MarkerOptions = {
 				},
 				markResetTimeInMinutes = {
 					type = 'input',
-					name = 'Mark Reset Minutes (*requires reload)',
+					name = 'Mark Reset Minutes',
 					desc = 'Time (in minutes) to reset marked node icons. Default is 5. Supports partial minutes (0.5, etc.)',
                     get = 'GetResetTimeInMinutes',
                     set = 'SetResetTimeInMinutes',
@@ -69,7 +70,7 @@ local GatherMate2MarkerOptions = {
 				},
                 helpMisc = {
                     type = 'description',
-                    name = '\r\nMisc Options',
+                    name = '\r\nWhile reloading the UI should not be required, doing so will reset the state of things (Timers, marked node colors, etc.) If you radically change your timers or experience any visual issues, simply click the button below.',
                     order = 6
                 },				
 				reloadUIButton = {
@@ -83,7 +84,7 @@ local GatherMate2MarkerOptions = {
         },
         help = {
 			type = 'group',
-			name = 'FAQ',
+			name = 'Help / FAQ',
 			args = {
 				whatIsThisThingFaqHeader = {
 					order = 1,
@@ -145,7 +146,19 @@ local GatherMate2MarkerOptions = {
 					width = 'full',
 					fontSize = 'medium'
 				}
-
+			}
+        },
+        version = {
+			type = 'group',
+			name = 'Version',
+			args = {
+				versionText = {
+					order = 1,
+					type = 'description',
+					name = HeaderColor_h1 .. 'Version: ' .. addonVersion,
+					width = 'full',
+					fontSize = 'large'
+				}
 			}
         }
     }
@@ -195,6 +208,8 @@ function GatherMate2Marker:OnInitialize()
     self:RegisterChatCommand('GatherMate2Marker', 'ToggleOptions')	
     self:RegisterChatCommand('GatherMateMarker', 'ToggleOptions')	
     self:RegisterChatCommand('gathermatemarker', 'ToggleOptions')	
+
+	GatherMate2Marker:CancelAllTimers()
 
 	print(addonNameFull .. ' initialized')
 end	
@@ -292,12 +307,6 @@ function GatherMate2Marker:AddMiniPin_STUB(pin, refresh)
 		return
 	end
 
-	if PinDB[pin.coords] ~= nil and PinDB[pin.coords].touched == true then
-		pin.texture:SetVertexColor(UnpackColorData(profile.nodeColor))
-		return
-	end
-
-	-- if pin.isCircle == true and refresh == true then		
 	if pin.isCircle == true then		
 		if PinDB[pin.coords] == nil then
 			PinDB[pin.coords] = {}
@@ -307,16 +316,30 @@ function GatherMate2Marker:AddMiniPin_STUB(pin, refresh)
 
 		pin.texture:SetVertexColor(UnpackColorData(profile.nodeColor))
 
-		GM_Display.UpdateMiniMap(true)
+		-- for future debugging
+		-- local pinX, pinY = GatherMate:DecodeLoc(pin.coords) 
 
-		C_Timer.After(profile.ResetTimeInMinutes * 60, function() GatherMate2Marker:ResetNodeToDefault(pin.coords) end);
+		if PinDB[pin.coords].activeTimer ~= nil then
+			GatherMate2Marker:CancelTimer(PinDB[pin.coords].activeTimer)
+		end
+
+		PinDB[pin.coords].activeTimer = GatherMate2Marker:ScheduleTimer(function() GatherMate2Marker:ResetNodeToDefault(pin.coords) end, profile.ResetTimeInMinutes * 60, nil, nil)		
+	elseif PinDB[pin.coords] ~= nil and PinDB[pin.coords].touched == true then
+		pin.texture:SetVertexColor(UnpackColorData(profile.nodeColor))
 	end
 end
 
 function GatherMate2Marker:ResetNodeToDefault(coords)
-	if PinDB ~= nil and coords ~= nil and PinDB[coords] ~= nil then
-		PinDB[coords].touched = false
+	if coords == nil then
+		print('received invalid coords on ResetNodeToDefault callback!')
 	end
+	
+	if PinDB[coords] == nil then
+		PinDB[coords] = {}
+	end
+
+	PinDB[coords].touched = false
+	PinDB[coords].activeTimer = nil
 end
 
 -- internal utility methods
