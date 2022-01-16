@@ -241,7 +241,8 @@ function GatherMate2Marker:OnInitialize()
     self.db.RegisterCallback(self, 'OnProfileCopied', 'RefreshConfig')
     self.db.RegisterCallback(self, 'OnProfileReset', 'ResetConfig')
 
-    GatherMate2Marker:RegisterEvent('ZONE_CHANGED_NEW_AREA', 'OnZoneChangedNewArea')
+	-- for posterity
+    -- GatherMate2Marker:RegisterEvent('ZONE_CHANGED_NEW_AREA', 'OnZoneChangedNewArea')
 
     profile = self.db.profile
 
@@ -295,9 +296,7 @@ function GatherMate2Marker:SetEnabled(info, val)
 end
 
 function GatherMate2Marker:OnZoneChangedNewArea()
-	-- pin references and coords have likely been lost due to recyclying/caching. Start anew.
-	GatherMate2Marker:CancelAllTimers()
-	PinDB = {}
+	-- for posterity
 end
 
 function GatherMate2Marker:GetEnabled(info)
@@ -388,27 +387,30 @@ function GatherMate2Marker:AddMiniPin_STUB(pin, refresh)
 
 		pin.texture:SetVertexColor(UnpackColorData(profile.nodeColor))
 
-		-- for future debugging
-		-- local pinX, pinY = GatherMate:DecodeLoc(pin.coords) 
-
 		if PinDB[pin.coords].activeTimer ~= nil then
 			GatherMate2Marker:CancelTimer(PinDB[pin.coords].activeTimer)
 		end
 
-		PinDB[pin.coords].activeTimer = GatherMate2Marker:ScheduleTimer(function() GatherMate2Marker:ResetNodeToDefault(pin.coords) end, profile.ResetTimeInMinutes * 60, nil, nil)		
+		pinCoords = pin.coords
+		PinDB[pin.coords].activeTimer = GatherMate2Marker:ScheduleTimer("ResetNodeToDefault", profile.ResetTimeInMinutes * 60, pinCoords, nil)		
+
 	elseif PinDB[pin.coords] ~= nil and PinDB[pin.coords].touched == true then
 		pin.texture:SetVertexColor(UnpackColorData(profile.nodeColor))
+	end
+
+	if PinDB[pin.coords] ~= nil and PinDB[pin.coords].touched == false and PinDB[pin.activeTimer] == nil then
+		-- print('Cleaning up pin at: ' .. tostring(pin.coords))
+		PinDB[pin.coords] = nil
 	end
 end
 
 function GatherMate2Marker:ResetNodeToDefault(coords)
 	if coords == nil then
+		print('got nill coords!')
 		return
 	end
-	
-	if PinDB[coords] == nil then
-		PinDB[coords] = {}
-	end
+
+	GatherMate2Marker:CancelTimer(PinDB[coords].activeTimer)
 
 	PinDB[coords].touched = false
 	PinDB[coords].activeTimer = nil
