@@ -6,6 +6,8 @@
 ## Version: 1.0.5
 ## Dependencies: GatherMate2
 ## SavedVariables: GatherMate2MarkerDB
+## X-Curse-Project-ID: 565501
+## X-WoWI-ID: 26213
 
 embeds.xml
 
