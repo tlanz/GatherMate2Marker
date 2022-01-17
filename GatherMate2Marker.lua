@@ -5,7 +5,7 @@ local addonAuthor = GetAddOnMetadata('GatherMate2Marker', 'Author')
 
 local addonSupportLink = 'https://discord.gg/eVQaacthGv'
 
-local GatherMate2Marker = LibStub('AceAddon-3.0'):NewAddon('GatherMate2Marker', 'AceConsole-3.0', 'AceTimer-3.0', 'AceEvent-3.0')
+local GatherMate2Marker = LibStub('AceAddon-3.0'):NewAddon('GatherMate2Marker', 'AceConsole-3.0', 'AceTimer-3.0')
 local GatherMate = LibStub('AceAddon-3.0'):GetAddon('GatherMate2')
 local GatherMate2MarkerCfg = LibStub('AceConfig-3.0')
 local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
@@ -241,9 +241,6 @@ function GatherMate2Marker:OnInitialize()
     self.db.RegisterCallback(self, 'OnProfileCopied', 'RefreshConfig')
     self.db.RegisterCallback(self, 'OnProfileReset', 'ResetConfig')
 
-	-- for posterity
-    -- GatherMate2Marker:RegisterEvent('ZONE_CHANGED_NEW_AREA', 'OnZoneChangedNewArea')
-
     profile = self.db.profile
 
     AceConfigRegistry:RegisterOptionsTable(addonNameFull, generalOptions)
@@ -291,12 +288,8 @@ function GatherMate2Marker:SetEnabled(info, val)
 	 	GM_Display.addMiniPin = GM_Display_addMiniMapPinActual
 	end
 
-	-- Have GM disptch a map refresh
+	-- Have GM dispatch a map refresh
 	GM_Display:UpdateMiniMap(true)
-end
-
-function GatherMate2Marker:OnZoneChangedNewArea()
-	-- for posterity
 end
 
 function GatherMate2Marker:GetEnabled(info)
@@ -398,15 +391,14 @@ function GatherMate2Marker:AddMiniPin_STUB(pin, refresh)
 		pin.texture:SetVertexColor(UnpackColorData(profile.nodeColor))
 	end
 
+	-- if we have a pin with no utility, drop it from PinDB
 	if PinDB[pin.coords] ~= nil and PinDB[pin.coords].touched == false and PinDB[pin.activeTimer] == nil then
-		-- print('Cleaning up pin at: ' .. tostring(pin.coords))
 		PinDB[pin.coords] = nil
 	end
 end
 
 function GatherMate2Marker:ResetNodeToDefault(coords)
 	if coords == nil then
-		print('got nill coords!')
 		return
 	end
 
