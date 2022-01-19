@@ -58,6 +58,16 @@ local generalOptions = {
 			width = 'full',
 			order = 4
 		},
+		useGatherMateCircleDefault = 
+		{
+			type = 'toggle',
+			name = 'Use default GatherMate circle color',
+			desc = 'Check this to ignore our custom color when showing the circle, and instead use GatherMate 2\'s default color (green as of this writing).\r\n\r\nThis is useful if you have your marker color set to 0 alpha, but still want to know when GatherMate has identified that you\'re within range of a potential resource node.',
+			get = 'GetUseGMCircleColor',
+			set = 'SetUseGMCircleColor',
+			width = 'full',
+			order = 5
+		},
 		markResetTimeInMinutes = {
 			type = 'input',
 			name = 'Mark Reset Minutes',
@@ -65,19 +75,19 @@ local generalOptions = {
 			get = 'GetResetTimeInMinutes',
 			set = 'SetResetTimeInMinutes',
 			width = 'full',
-			order = 5
+			order = 6
 		},
 		helpMisc = {
 			type = 'description',
 			name = '\r\nWhile reloading the UI should not be required, doing so will reset the state of things (Timers, marked node colors, etc.) If you radically change your timers or experience any visual issues, simply click the button below.',
-			order = 6
+			order = 7
 		},				
 		reloadUIButton = {
 			type = 'execute',
 			name = 'Reload UI',
 			desc = 'Reload the Blizz UI',
 			func = function () ReloadUI() end,
-			order = 7,
+			order = 8,
 		}
     }
 }
@@ -229,6 +239,7 @@ local aboutOptions = {
 local optionDefaults = {
     profile = {
         enabled = true,
+		useGMCircleColor = false,
 		ResetTimeInMinutes = 5,
 		nodeColor = { 1.0, 1.0, 1.0, 0.45 }
     }
@@ -294,6 +305,16 @@ end
 
 function GatherMate2Marker:GetEnabled(info)
     return profile.enabled
+end
+
+function GatherMate2Marker:SetUseGMCircleColor(info, val)
+	profile.useGMCircleColor = val
+
+	GM_Display:UpdateMiniMap(true)
+end
+
+function GatherMate2Marker:GetUseGMCircleColor(info)
+    return profile.useGMCircleColor
 end
 
 function GatherMate2Marker:GetMarkedNodeColor(info)
@@ -378,7 +399,9 @@ function GatherMate2Marker:AddMiniPin_STUB(pin, refresh)
 
 		PinDB[pin.coords].touched = true
 
-		pin.texture:SetVertexColor(UnpackColorData(profile.nodeColor))
+		if profile.useGMCircleColor ~= true then
+			pin.texture:SetVertexColor(UnpackColorData(profile.nodeColor))
+		end
 
 		if PinDB[pin.coords].activeTimer ~= nil then
 			GatherMate2Marker:CancelTimer(PinDB[pin.coords].activeTimer)
