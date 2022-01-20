@@ -62,7 +62,7 @@ local generalOptions = {
 		{
 			type = 'toggle',
 			name = 'Use default GatherMate circle color',
-			desc = 'Check this to ignore our custom color when showing the circle, and instead use GatherMate 2\'s default color (green as of this writing).\r\n\r\nThis is useful if you have your marker color set to 0 alpha, but still want to know when GatherMate has identified that you\'re within range of a potential resource node.',
+			desc = 'Check this to ignore our custom color when showing the circle, and instead use GatherMate 2\'s default color (green for herbs, as of this writing).\r\n\r\nThis is useful if you have your marker color set to 0 alpha, but still want to know when GatherMate has identified that you\'re within range of a potential resource node.',
 			get = 'GetUseGMCircleColor',
 			set = 'SetUseGMCircleColor',
 			width = 'full',
@@ -403,14 +403,25 @@ function GatherMate2Marker:AddMiniPin_STUB(pin, refresh)
 			pin.texture:SetVertexColor(UnpackColorData(profile.nodeColor))
 		end
 
+		-- we've gotten close to a resource node. Cancel any existing timers.
 		if PinDB[pin.coords].activeTimer ~= nil then
 			GatherMate2Marker:CancelTimer(PinDB[pin.coords].activeTimer)
+			PinDB[pin.coords].activeTimer = nil
 		end
 
-		pinCoords = pin.coords
-		PinDB[pin.coords].activeTimer = GatherMate2Marker:ScheduleTimer("ResetNodeToDefault", profile.ResetTimeInMinutes * 60, pinCoords, nil)		
+		-- mark this for future checks. When we get far enough away from the node, we'll kick off our timer.
+		PinDB[pin.coords].wasCircle = true
 
 	elseif PinDB[pin.coords] ~= nil and PinDB[pin.coords].touched == true then
+		if PinDB[pin.coords].wasCircle == true then
+			pinCoords = pin.coords
+
+			-- kick off a timer, to return the node to its default visuals
+			PinDB[pin.coords].activeTimer = GatherMate2Marker:ScheduleTimer("ResetNodeToDefault", profile.ResetTimeInMinutes * 60, pinCoords, nil)
+			
+			-- reset this for future checks
+			PinDB[pin.coords].wasCircle = false
+		end
 		pin.texture:SetVertexColor(UnpackColorData(profile.nodeColor))
 	end
 
