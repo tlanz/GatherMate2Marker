@@ -422,11 +422,15 @@ function GatherMate2Marker:AddMiniPin_STUB(pin, refresh)
 			-- reset this for future checks
 			PinDB[pin.coords].wasCircle = false
 		end
+
+		pin.texture:SetDesaturated(1)
 		pin.texture:SetVertexColor(UnpackColorData(profile.nodeColor))
 	end
 
 	-- if we have a pin with no utility, drop it from PinDB
 	if PinDB[pin.coords] ~= nil and PinDB[pin.coords].touched == false and PinDB[pin.activeTimer] == nil then
+		pin.texture:SetDesaturated(nil)
+
 		PinDB[pin.coords] = nil
 	end
 end
