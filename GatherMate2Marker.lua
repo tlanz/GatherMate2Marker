@@ -77,17 +77,26 @@ local generalOptions = {
 			width = 'full',
 			order = 6
 		},
+		persistOnReload = {
+			type = 'toggle',
+			name = 'Persist on reload',
+			desc = 'Remember mini-map node states during reload/login',
+			get = 'GetPersistOnReload',
+			set = 'SetPersistOnReload',
+			width = 'full',
+			order = 7
+		},		
 		helpMisc = {
 			type = 'description',
 			name = '\r\nWhile reloading the UI should not be required, doing so will reset the state of things (Timers, marked node colors, etc.) If you radically change your timers or experience any visual issues, simply click the button below.',
-			order = 7
+			order = 8
 		},				
 		reloadUIButton = {
 			type = 'execute',
 			name = 'Reload UI',
 			desc = 'Reload the Blizz UI',
 			func = function () ReloadUI() end,
-			order = 8,
+			order = 9
 		}
     }
 }
@@ -241,7 +250,8 @@ local optionDefaults = {
         enabled = true,
 		useGMCircleColor = false,
 		ResetTimeInMinutes = 5,
-		nodeColor = { 1.0, 1.0, 1.0, 0.45 }
+		nodeColor = { 1.0, 1.0, 1.0, 0.45 },
+		persistOnReload = true
     }
 }
 
@@ -267,7 +277,9 @@ function GatherMate2Marker:OnInitialize()
     AceConfigDialog:AddToBlizOptions("GM2M/Profiles", "Profiles", addonNameFull)
 
 	-- general initialization
-	PinDB = {}
+	if profile.pinDB == nil then
+		profile.pinDB = {}
+	end
 
 	-- get ahold of GatherMate2 modules and data
 	GM2_DB = GatherMate.db.profile
@@ -280,15 +292,37 @@ function GatherMate2Marker:OnInitialize()
 		GM_Display.addMiniPin = GatherMate2Marker.AddMiniPin_STUB
 	end
 
+	GatherMate2Marker:CancelAllTimers()
+
     self:RegisterChatCommand('gmm', 'ToggleOptions')	
     self:RegisterChatCommand('gm2m', 'ToggleOptions')	
-
-	GatherMate2Marker:CancelAllTimers()
 
 	print(addonNameFull .. ' initialized')
 end	
 
-function GatherMate2Marker:SetEnabled(info, val)
+function GatherMate2Marker:OnEnable()
+	if profile.persistOnReload == true then
+		PinDB = profile.pinDB
+		-- cleanup pins if they have exceeded their timers
+		for key, value in pairs(profile.pinDB) do
+			local activeTimer = PinDB[key].activeTimer
+			if activeTimer ~= nil then
+				local timeRemaining = PinDB[key].activeTimer.ends - GetTime()
+
+				if timeRemaining <= 0 then
+					PinDB[key] = nil
+				else
+					PinDB[key].activeTimer = GatherMate2Marker:ScheduleTimer("ResetNodeToDefault", timeRemaining, key, nil)
+				end
+			end
+		end
+	else
+		profile.pinDB = {}
+		PinDB = profile.pinDB
+	end
+end
+
+function GatherMate2Marker:SetEnabled(info, val)	
 	profile.enabled = val
 
 	if profile.enabled == true then
@@ -305,6 +339,14 @@ end
 
 function GatherMate2Marker:GetEnabled(info)
     return profile.enabled
+end
+
+function GatherMate2Marker:SetPersistOnReload(info, val)
+	profile.persistOnReload = val
+end
+
+function GatherMate2Marker:GetPersistOnReload(info)
+    return profile.persistOnReload
 end
 
 function GatherMate2Marker:SetUseGMCircleColor(info, val)
@@ -374,6 +416,11 @@ function GatherMate2Marker:ResetConfig()
 	profile.nodeColor = optionDefaults.profile.nodeColor
 	profile.ResetTimeInMinutes = optionDefaults.profile.ResetTimeInMinutes
 	profile.enabled = optionDefaults.profile.enabled
+	profile.persistOnReload = optionDefaults.profile.persistOnReload
+
+	profile.pinDB = {}
+	PinDB = profile.pinDB
+	self:RefreshConfig()
 end
 
 function GatherMate2Marker:AddMiniPin_STUB(pin, refresh)	
