@@ -1,4 +1,4 @@
-## Interface: 20504
+## Interface: 20503
 ## Title: GatherMate2Marker
 ## X-FullName: GatherMate 2 Marker
 ## Author: Froboz @ Old Blanchy (TBC Classic)
