@@ -11,7 +11,7 @@ local GatherMate2MarkerCfg = LibStub('AceConfig-3.0')
 local AceConfigRegistry = LibStub("AceConfigRegistry-3.0")
 local AceConfigDialog = LibStub("AceConfigDialog-3.0")
 
-profile = nil
+local profile = {}
 
 GM_Display, GM_Display_addMiniMapPinStub = nil
 PinDB, GM2_DB = nil
@@ -255,14 +255,34 @@ local optionDefaults = {
     }
 }
 
+function GatherMate2Marker:SetDefaults()
+	if profile.enabled == nil then
+		profile.enabled = optionDefaults.profile.enabled
+		print('setting enabled to ' .. tostring(profile.enabled))
+	end
+
+	if profile.nodeColor == nil then 
+		profile.nodeColor = optionDefaults.profile.nodeColor
+	end
+
+	if profile.ResetTimeInMinutes == nil then
+		profile.ResetTimeInMinutes = optionDefaults.profile.ResetTimeInMinutes
+	end
+
+	if profile.persistOnReload == nil then
+		profile.persistOnReload = optionDefaults.profile.persistOnReload
+	end
+end
+
 function GatherMate2Marker:OnInitialize()
-    self.db = LibStub('AceDB-3.0'):New('GatherMate2MarkerDB', optionDefaults)
+	self.db = LibStub('AceDB-3.0'):New('GatherMate2MarkerDB', optionDefaults)
+    profile = self.db.profile
+
+	self:SetDefaults()
 
     self.db.RegisterCallback(self, 'OnProfileChanged', 'RefreshConfig')
     self.db.RegisterCallback(self, 'OnProfileCopied', 'RefreshConfig')
     self.db.RegisterCallback(self, 'OnProfileReset', 'ResetConfig')
-
-    profile = self.db.profile
 
     AceConfigRegistry:RegisterOptionsTable(addonNameFull, generalOptions)
     local options = AceConfigDialog:AddToBlizOptions(addonNameFull, addonNameFull)
