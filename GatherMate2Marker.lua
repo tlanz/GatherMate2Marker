@@ -3,7 +3,7 @@ local addonNameFull = GetAddOnMetadata('GatherMate2Marker', 'X-FullName')
 local addonVersion = GetAddOnMetadata('GatherMate2Marker', 'Version')
 local addonAuthor = GetAddOnMetadata('GatherMate2Marker', 'Author')
 
-local addonSupportLink = 'https://discord.gg/eVQaacthGv'
+local addonSupportLink = 'https://discord.gg/wTFM4pghYn'
 
 local GatherMate2Marker = LibStub('AceAddon-3.0'):NewAddon('GatherMate2Marker', 'AceConsole-3.0', 'AceTimer-3.0')
 local GatherMate = LibStub('AceAddon-3.0'):GetAddon('GatherMate2')
