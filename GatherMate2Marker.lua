@@ -85,18 +85,27 @@ local generalOptions = {
 			set = 'SetPersistOnReload',
 			width = 'full',
 			order = 7
-		},		
+		},
+		playSFXOnMarked = {
+			type = 'toggle',
+			name = 'SFX on mark',
+			desc = 'Play a subtle sound when nodes on mini-map are considered marked',
+			get = 'GetPlaySFXOnMark',
+			set = 'SetPlaySFXOnMark',
+			width = 'full',
+			order = 8
+		},
 		helpMisc = {
 			type = 'description',
 			name = '\r\nWhile reloading the UI should not be required, doing so will reset the state of things (Timers, marked node colors, etc.) If you radically change your timers or experience any visual issues, simply click the button below.',
-			order = 8
+			order = 9
 		},				
 		reloadUIButton = {
 			type = 'execute',
 			name = 'Reload UI',
 			desc = 'Reload the Blizz UI',
 			func = function () ReloadUI() end,
-			order = 9
+			order = 10
 		}
     }
 }
@@ -369,6 +378,14 @@ function GatherMate2Marker:GetPersistOnReload(info)
     return profile.persistOnReload
 end
 
+function GatherMate2Marker:SetPlaySFXOnMark(info, val)
+	profile.playSFXOnMark = val
+end
+
+function GatherMate2Marker:GetPlaySFXOnMark(info)
+	return profile.playSFXOnMark
+end
+
 function GatherMate2Marker:SetUseGMCircleColor(info, val)
 	profile.useGMCircleColor = val
 
@@ -455,13 +472,18 @@ function GatherMate2Marker:AddMiniPin_STUB(pin, refresh)
 	local isDeadOrGhost = UnitIsDeadOrGhost('player') 
 	local isTraveling = UnitOnTaxi('player')
 
-	if isDeadOrGhost == true or isTraveling == true then
+	if isDeadOrGhost == true or isTraveling then
 		return
 	end
 
 	if pin.isCircle == true then		
 		if PinDB[pin.coords] == nil then
 			PinDB[pin.coords] = {}
+
+			-- optionally play a sound effect if marking a node for the first time (in the timeout window)
+			if profile.playSFXOnMark == true then
+				PlaySoundFile("Interface\\AddOns\\GatherMate2Marker\\Sounds\\mark_pop.mp3", "sfx", false)
+			end
 		end
 
 		PinDB[pin.coords].touched = true
@@ -478,19 +500,17 @@ function GatherMate2Marker:AddMiniPin_STUB(pin, refresh)
 
 		-- mark this for future checks. When we get far enough away from the node, we'll kick off our timer.
 		PinDB[pin.coords].wasCircle = true
-
 	elseif PinDB[pin.coords] ~= nil and PinDB[pin.coords].touched == true then
 		if PinDB[pin.coords].wasCircle == true then
 			pinCoords = pin.coords
 
 			-- kick off a timer, to return the node to its default visuals
 			PinDB[pin.coords].activeTimer = GatherMate2Marker:ScheduleTimer("ResetNodeToDefault", profile.ResetTimeInMinutes * 60, pinCoords, nil)
-			
+								
 			-- reset this for future checks
 			PinDB[pin.coords].wasCircle = false
 		end
 
-		-- pin.texture:SetDesaturated(1)
 		pin.texture:SetVertexColor(UnpackColorData(profile.nodeColor))
 	end
 
