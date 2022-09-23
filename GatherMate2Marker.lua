@@ -39,10 +39,20 @@ local generalOptions = {
 			width = 'full',
 			order = 2
 		},
+		herbalismTrackingAutoSet = {
+			type = 'toggle',
+			name = 'Always Track Herbs',
+			desc = 'Automatically enable \'Find Herbs\' if not set.',
+			get = 'GetHerbalismTrackingAutoSet',
+			set = 'SetHerbalismTrackingAutoSet',
+			width = 'full',
+			order = 3
+		},		
+		
 		helpNode = {
 			type = 'description',
 			name = '\r\nNode Options',
-			order = 3
+			order = 4
 		},				
 		markedNodeColor = {
 			type = 'color',
@@ -52,7 +62,7 @@ local generalOptions = {
 			get = 'GetMarkedNodeColor',
 			set = 'SetMarkedNodeColor',
 			width = 'full',
-			order = 4
+			order = 5
 		},
 		useGatherMateCircleDefault = 
 		{
@@ -62,7 +72,7 @@ local generalOptions = {
 			get = 'GetUseGMCircleColor',
 			set = 'SetUseGMCircleColor',
 			width = 'full',
-			order = 5
+			order = 6
 		},
 		markResetTimeInMinutes = {
 			type = 'input',
@@ -70,8 +80,8 @@ local generalOptions = {
 			desc = 'Time (in minutes) to reset marked node icons. Default is 5. Supports partial minutes (0.5, etc.)',
 			get = 'GetResetTimeInMinutes',
 			set = 'SetResetTimeInMinutes',
-			width = 'full',
-			order = 6
+			width = 'normal',
+			order = 7
 		},
 		persistOnReload = {
 			type = 'toggle',
@@ -80,7 +90,7 @@ local generalOptions = {
 			get = 'GetPersistOnReload',
 			set = 'SetPersistOnReload',
 			width = 'full',
-			order = 7
+			order = 8
 		},
 		playSFXOnMarked = {
 			type = 'toggle',
@@ -89,7 +99,7 @@ local generalOptions = {
 			get = 'GetPlaySFXOnMarked',
 			set = 'SetPlaySFXOnMarked',
 			width = 'normal',
-			order = 8
+			order = 9
 		},
 		playSFXOnMarkedVolume = {
 			type = 'select',
@@ -103,19 +113,19 @@ local generalOptions = {
 				normal = "Normal",
 				loud = "Loud"
 			},
-			order = 9
+			order = 10
 		},
 		helpMisc = {
 			type = 'description',
 			name = '\r\nWhile reloading the UI should not be required, doing so will reset the state of things (Timers, marked node colors, etc.) If you radically change your timers or experience any visual issues, simply click the button below.',
-			order = 10
+			order = 11
 		},				
 		reloadUIButton = {
 			type = 'execute',
 			name = 'Reload UI',
 			desc = 'Reload the Blizz UI',
 			func = function () ReloadUI() end,
-			order = 11
+			order = 12
 		}
     }
 }
@@ -272,7 +282,8 @@ local optionDefaults = {
 		nodeColor = { 1.0, 1.0, 1.0, 0.45 },
 		persistOnReload = true,
 		playSFXOnMarked = false,
-		playSFXOnMarkedVolume = 'normal'
+		playSFXOnMarkedVolume = 'normal',
+		herbalismTrackingAutoSet = true		
     }
 }
 
@@ -401,6 +412,14 @@ function GatherMate2Marker:SetPlaySFXOnMarkedVolume(info, val)
 	profile.playSFXOnMarkedVolume = val
 end
 
+function GatherMate2Marker:GetHerbalismTrackingAutoSet(info)
+	return profile.herbalismTrackingAutoSet	
+end
+
+function GatherMate2Marker:SetHerbalismTrackingAutoSet(info, val)
+	profile.herbalismTrackingAutoSet = val	
+end
+
 function GatherMate2Marker:GetPlaySFXOnMarkedVolume(info)
 	return profile.playSFXOnMarkedVolume
 end
@@ -479,7 +498,7 @@ function GatherMate2Marker:ResetConfig()
 	self:RefreshConfig()
 end
 
-function GatherMate2Marker:AddMiniPin_STUB(pin, refresh)	
+function GatherMate2Marker:AddMiniPin_STUB(pin, refresh)
 	-- trigger the original GM2 addMinimapPin method
 	GM_Display_addMiniMapPinActual(_, pin, refresh)	
 
@@ -499,6 +518,8 @@ function GatherMate2Marker:AddMiniPin_STUB(pin, refresh)
 		if PinDB[pin.coords] == nil then
 			PinDB[pin.coords] = {}
 
+			GatherMate2Marker:CheckHerbalismTrackingEnabled()
+			
 			-- optionally play a sound effect if marking a node for the first time (in the timeout window)
 			if profile.playSFXOnMarked == true then
 				local sfxVolumeType = profile.playSFXOnMarkedVolume
@@ -548,8 +569,6 @@ function GatherMate2Marker:AddMiniPin_STUB(pin, refresh)
 
 	-- if we have a pin with no utility, drop it from PinDB
 	if PinDB[pin.coords] ~= nil and PinDB[pin.coords].touched == false and PinDB[pin.activeTimer] == nil then
-		-- pin.texture:SetDesaturated(nil)
-
 		PinDB[pin.coords] = nil
 	end
 end
@@ -563,6 +582,19 @@ function GatherMate2Marker:ResetNodeToDefault(coords)
 
 	PinDB[coords].touched = false
 	PinDB[coords].activeTimer = nil
+end
+
+function GatherMate2Marker:CheckHerbalismTrackingEnabled()
+	if profile.herbalismTrackingAutoSet == true then
+		local _, _, active = GetTrackingInfo(1)
+
+		if (active == false) then
+			print(Text_special1 .. '[' .. addonNameFull .. ']' .. Text_special2 .. 
+					': Find Herbs (WoW Tracking) automatically enabled. Uncheck option \'Always Track Herbs\' to disable this behavior.')
+			SetTracking(1, true)
+		end
+		
+	end
 end
 
 -- internal utility methods
