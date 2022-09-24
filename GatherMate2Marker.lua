@@ -39,20 +39,10 @@ local generalOptions = {
 			width = 'full',
 			order = 2
 		},
-		herbalismTrackingAutoSet = {
-			type = 'toggle',
-			name = 'Always Track Herbs',
-			desc = 'Automatically enable \'Find Herbs\' if not set.',
-			get = 'GetHerbalismTrackingAutoSet',
-			set = 'SetHerbalismTrackingAutoSet',
-			width = 'full',
-			order = 3
-		},		
-		
 		helpNode = {
 			type = 'description',
 			name = '\r\nNode Options',
-			order = 4
+			order = 3
 		},				
 		markedNodeColor = {
 			type = 'color',
@@ -62,7 +52,7 @@ local generalOptions = {
 			get = 'GetMarkedNodeColor',
 			set = 'SetMarkedNodeColor',
 			width = 'full',
-			order = 5
+			order = 4
 		},
 		useGatherMateCircleDefault = 
 		{
@@ -72,7 +62,7 @@ local generalOptions = {
 			get = 'GetUseGMCircleColor',
 			set = 'SetUseGMCircleColor',
 			width = 'full',
-			order = 6
+			order = 5
 		},
 		markResetTimeInMinutes = {
 			type = 'input',
@@ -81,7 +71,7 @@ local generalOptions = {
 			get = 'GetResetTimeInMinutes',
 			set = 'SetResetTimeInMinutes',
 			width = 'normal',
-			order = 7
+			order = 6
 		},
 		persistOnReload = {
 			type = 'toggle',
@@ -90,7 +80,7 @@ local generalOptions = {
 			get = 'GetPersistOnReload',
 			set = 'SetPersistOnReload',
 			width = 'full',
-			order = 8
+			order = 7
 		},
 		playSFXOnMarked = {
 			type = 'toggle',
@@ -99,7 +89,7 @@ local generalOptions = {
 			get = 'GetPlaySFXOnMarked',
 			set = 'SetPlaySFXOnMarked',
 			width = 'normal',
-			order = 9
+			order = 8
 		},
 		playSFXOnMarkedVolume = {
 			type = 'select',
@@ -113,19 +103,19 @@ local generalOptions = {
 				normal = "Normal",
 				loud = "Loud"
 			},
-			order = 10
+			order = 9
 		},
 		helpMisc = {
 			type = 'description',
 			name = '\r\nWhile reloading the UI should not be required, doing so will reset the state of things (Timers, marked node colors, etc.) If you radically change your timers or experience any visual issues, simply click the button below.',
-			order = 11
+			order = 10
 		},				
 		reloadUIButton = {
 			type = 'execute',
 			name = 'Reload UI',
 			desc = 'Reload the Blizz UI',
 			func = function () ReloadUI() end,
-			order = 12
+			order = 11
 		}
     }
 }
@@ -283,7 +273,6 @@ local optionDefaults = {
 		persistOnReload = true,
 		playSFXOnMarked = false,
 		playSFXOnMarkedVolume = 'normal',
-		herbalismTrackingAutoSet = true		
     }
 }
 
@@ -412,14 +401,6 @@ function GatherMate2Marker:SetPlaySFXOnMarkedVolume(info, val)
 	profile.playSFXOnMarkedVolume = val
 end
 
-function GatherMate2Marker:GetHerbalismTrackingAutoSet(info)
-	return profile.herbalismTrackingAutoSet	
-end
-
-function GatherMate2Marker:SetHerbalismTrackingAutoSet(info, val)
-	profile.herbalismTrackingAutoSet = val	
-end
-
 function GatherMate2Marker:GetPlaySFXOnMarkedVolume(info)
 	return profile.playSFXOnMarkedVolume
 end
@@ -518,8 +499,6 @@ function GatherMate2Marker:AddMiniPin_STUB(pin, refresh)
 		if PinDB[pin.coords] == nil then
 			PinDB[pin.coords] = {}
 
-			GatherMate2Marker:CheckHerbalismTrackingEnabled()
-			
 			-- optionally play a sound effect if marking a node for the first time (in the timeout window)
 			if profile.playSFXOnMarked == true then
 				local sfxVolumeType = profile.playSFXOnMarkedVolume
@@ -582,19 +561,6 @@ function GatherMate2Marker:ResetNodeToDefault(coords)
 
 	PinDB[coords].touched = false
 	PinDB[coords].activeTimer = nil
-end
-
-function GatherMate2Marker:CheckHerbalismTrackingEnabled()
-	if profile.herbalismTrackingAutoSet == true then
-		local _, _, active = GetTrackingInfo(1)
-
-		if (active == false) then
-			print(Text_special1 .. '[' .. addonNameFull .. ']' .. Text_special2 .. 
-					': Find Herbs (WoW Tracking) automatically enabled. Uncheck option \'Always Track Herbs\' to disable this behavior.')
-			SetTracking(1, true)
-		end
-		
-	end
 end
 
 -- internal utility methods
